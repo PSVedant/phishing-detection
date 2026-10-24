@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phishing Detection — ML Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--black:#000;--white:#fff;--canvas:#e5e5e5;--mist:#f3f3f3;--ash:#c6c6c6;--smoke:#979797;--slate:#444;--mint:#d1ffca;--yellow:#fff100;
+--cond:'Anton','Bebas Neue','Barlow Condensed',Impact,sans-serif;--sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'JetBrains Mono',ui-monospace,Consolas,monospace}
+*{box-sizing:border-box;margin:0}
+body{background:var(--canvas);color:var(--black);font:500 16px/1.25 var(--sans);letter-spacing:-.01em}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+section{margin-top:80px}
+h1,h2.d{font:400 clamp(56px,11vw,130px)/.9 var(--cond);letter-spacing:-.03em;text-transform:uppercase}
+h2.d{font-size:clamp(48px,7vw,80px)}
+h3{font:450 clamp(26px,3.4vw,40px)/1.1 var(--sans);letter-spacing:-.02em;text-transform:uppercase}
+.mono{font:400 12px/1.6 var(--mono);letter-spacing:-.03em;text-transform:uppercase}
+p{color:var(--slate);line-height:1.4}
+.nav{height:8rem;display:flex;align-items:center;justify-content:space-between}
+.pill{background:var(--white);border-radius:48px;padding:16px 32px;display:flex;gap:24px;flex-wrap:wrap}
+.pill a{color:var(--slate);text-decoration:none}.pill a:hover{color:var(--black);text-decoration:underline}
+.btn{background:var(--black);color:var(--white);border-radius:8px;padding:16px 24px;text-decoration:none}
+.tag{display:inline-block;background:var(--mint);border-radius:64px;padding:8px 16px;margin:0 8px 8px 0}
+.hl{background:var(--yellow);padding:0 6px}
+.hero{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:end}
+.card{background:var(--white);border-radius:32px;padding:24px}
+.big{border-radius:64px;padding:40px}
+.dark{background:var(--black);color:var(--white);border-radius:64px 64px 0 0;padding:80px 0 96px;margin-top:80px}
+.dark p{color:var(--smoke)}
+.grid{display:grid;gap:24px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g5{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.stat{font:400 clamp(72px,10vw,130px)/.9 var(--cond);letter-spacing:-.03em}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:16px 8px;border-bottom:1px solid var(--ash)}
+th{font:400 12px var(--mono);text-transform:uppercase;color:var(--smoke)}
+.bar{height:24px;background:var(--mist);border-radius:48px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--black)}
+.cm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.cm div{border-radius:24px;padding:16px;min-height:96px}.cm b{display:block;font:400 48px/.9 var(--cond)}
+.ok{background:var(--mint)}.bad{background:var(--mist)}.fn{background:var(--yellow)}
+pre{background:#2f2f2f;color:var(--white);border-radius:24px;padding:24px;overflow:auto;font:400 12px/1.6 var(--mono)}
+.fig img{width:100%;border-radius:24px;background:#fff;margin-top:16px}.wide{grid-column:1/-1}
+.coef{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2f2f2f}
+footer{background:var(--black);color:var(--smoke);padding:24px 0}
+@media(max-width:800px){.hero,.g2,.g3{grid-template-columns:1fr}.pill{display:none}.nav{height:5rem}}
+</style></head><body>
+<div class="wrap"><nav class="nav"><span class="mono">ML / Cybersecurity</span>
+<div class="pill"><a href="#problem">Problem</a><a href="#features">Features</a><a href="#models">Models</a><a href="#results">Results</a><a href="#gallery">Gallery</a><a href="#limits">Limits</a></div>
+<a class="btn" href="#results">See results</a></nav></div>
+
+<main class="wrap">
+<div class="hero"><div><span class="tag mono">Binary classification · phishing = 1</span><h1>Catch the<br>phish<br>before<br>it bites</h1></div>
+<div class="card big"><span class="tag mono" id="bestTag"></span><div class="stat" id="bestRecall"></div><h3 id="bestName"></h3>
+<p style="margin-top:16px">Top model by <b>recall</b> on the held-out test set of <span id="testN"></span> emails.</p>
+<p class="mono" style="margin-top:16px"><span class="hl">Synthetic data</span> — pipeline demo</p></div></div>
+
+<section id="problem" class="grid g2">
+<div class="card"><span class="tag mono">01 · Problem</span><h3>Missed phish costs more than a false alarm</h3>
+<p style="margin-top:16px">A false negative lets an attack reach the inbox. A false positive only costs a review. So <b>Recall</b> on the phishing class is the primary metric.</p></div>
+<div class="card"><span class="tag mono">02 · Method</span><h3>Reproducible by design</h3>
+<p style="margin-top:16px">Balanced labeled emails, stratified 70/30 split, fixed seed <b id="seed"></b>, scaling inside the pipeline, no test-set leakage.</p></div></section>
+
+<section id="features"><span class="tag mono">03 · Features</span><h2 class="d">14 signals<br>5 groups</h2>
+<div class="grid g5" id="featGrid" style="margin-top:40px"></div></section>
+
+<section id="models"><span class="tag mono">04 · Models</span><h2 class="d">Three<br>classifiers</h2>
+<div class="grid g3" style="margin-top:40px">
+<div class="card"><span class="mono">Linear baseline</span><h3>Logistic Regression</h3><p style="margin-top:16px">Standardised features, probability outputs, interpretable coefficients.</p></div>
+<div class="card"><span class="mono">Probabilistic baseline</span><h3>Gaussian Naive Bayes</h3><p style="margin-top:16px">Spam-filter style: per-feature Gaussian likelihoods, fast and scale-invariant.</p></div>
+<div class="card"><span class="mono">Rule-based</span><h3>Decision Tree</h3><p style="margin-top:16px">Gini splits with depth and leaf-size limits to prevent overfitting.</p></div></div></section>
+</main>
+
+<div class="dark" id="results"><div class="wrap"><span class="tag mono" style="color:#000">05 · Results</span>
+<h2 class="d">Ranked by<br>recall</h2>
+<div class="card big" style="margin-top:40px;color:#000"><table id="tbl"></table><div id="bars"></div></div>
+<div class="grid g3" id="cms" style="margin-top:24px;color:#000"></div></div></div>
+
+<main class="wrap"><section id="gallery"><span class="tag mono">Result images</span><h2 class="d">Visual<br>evidence</h2>
+<div class="grid g2" id="gallery-grid" style="margin-top:40px"></div></section>
+<section class="grid g2">
+<div class="card big"><span class="tag mono">06 · Explainability</span><h3>Logistic Regression drivers</h3><div id="coefs" style="margin-top:16px"></div></div>
+<div class="card big"><span class="tag mono">Key takeaway</span><h3>Recall is close — read the trade-off</h3>
+<p style="margin-top:16px" id="take"></p></div></section>
+
+<section id="limits" class="card big"><span class="tag mono">07 · Limitations</span><h3>Honest scope</h3>
+<p style="margin-top:16px">Data is <b>synthetic</b>, built to mimic phishing patterns, so scores are optimistic. Next: real corpora, richer features (text/TF-IDF, domain age), threshold tuning on <span class="mono">predict_proba</span>, cross-validated confidence intervals.</p></section></main>
+<footer style="margin-top:80px"><div class="wrap mono">Phishing Detection · scikit-learn · generated from reports/metrics.json</div></footer>
+
+<script>
+const D=__DATA__;
+const N={logistic_regression:"Logistic Regression",gaussian_nb:"Gaussian Naive Bayes",decision_tree:"Decision Tree"};
+const $=id=>document.getElementById(id),pct=v=>(v*100).toFixed(1)+"%",M=D.metrics,b=M[0];
+$("bestRecall").textContent=pct(b.recall);$("bestName").textContent=N[b.model];$("bestTag").textContent="Best recall";
+$("testN").textContent=D.test_size;$("seed").textContent=D.seed;
+$("featGrid").innerHTML=Object.entries(D.groups).map(([g,f])=>`<div class="card"><span class="tag mono">${g}</span>${f.map(x=>`<p class="mono">${x}</p>`).join("")}</div>`).join("");
+$("tbl").innerHTML="<tr><th>#</th><th>Model</th><th>Recall</th><th>Precision</th><th>F1</th></tr>"+M.map((m,i)=>`<tr><td class="mono">${i+1}</td><td>${N[m.model]}</td><td><b>${pct(m.recall)}</b></td><td>${pct(m.precision)}</td><td>${pct(m.f1)}</td></tr>`).join("");
+$("bars").innerHTML=M.map(m=>`<div style="margin-top:16px"><span class="mono">${N[m.model]} · recall</span><div class="bar"><i style="width:${m.recall*100}%"></i></div></div>`).join("");
+$("cms").innerHTML=M.map(m=>`<div class="card"><h3 style="font-size:28px">${N[m.model]}</h3><div class="cm">
+<div class="ok"><span class="mono">TN legit ok</span><b>${m.TN}</b></div><div class="bad"><span class="mono">FP false alarm</span><b>${m.FP}</b></div>
+<div class="fn"><span class="mono">FN missed phish</span><b>${m.FN}</b></div><div class="ok"><span class="mono">TP caught</span><b>${m.TP}</b></div></div></div>`).join("");
+$("coefs").innerHTML=D.coefs.map(([n,v])=>`<div class="coef"><span class="mono">${n}</span><b>${v>0?"+":""}${v.toFixed(2)}</b></div>`).join("");
+$("gallery-grid").innerHTML=D.images.map(([t,src],i)=>`<div class="card fig${i%2==0&&i==D.images.length-1||i==0||t.includes("Decision")?" wide":""}"><h3 style="font-size:28px">${t}</h3><img src="${src}" alt="${t}"></div>`).join("");
+const w=M.reduce((a,m)=>m.FN<a.FN?m:a),p=M.reduce((a,m)=>m.FP<a.FP?m:a);
+$("take").textContent=`${N[b.model]} leads on recall (${pct(b.recall)}), but the spread across models is only ${((M[0].recall-M[M.length-1].recall)*100).toFixed(1)} pts. ${N[w.model]} misses the fewest phish (${w.FN}); ${N[p.model]} raises the fewest false alarms (${p.FP}).`;
+</script></body></html>
